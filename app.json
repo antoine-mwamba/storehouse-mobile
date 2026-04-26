@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "storehouse-mobile",
+    "name": "The Storehouse",
     "slug": "storehouse-mobile",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -10,7 +10,7 @@
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
+      "backgroundColor": "#002366"
     },
     "ios": {
       "supportsTablet": true
