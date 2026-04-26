@@ -51,6 +51,7 @@ function HomeScreen() {
         <View style={s.dailyCard}>
           <View style={s.dailyDecorCircle1} />
           <View style={s.dailyDecorCircle2} />
+          <View style={s.dailyDecorCircle3} />
           <Text style={s.verseRef}>JOHN 1:1</Text>
           <Text style={s.verseText}>
             "In the beginning was the Word, and the Word was with God, and the Word was God."
@@ -72,7 +73,7 @@ function HomeScreen() {
         <View style={s.card}>
           <TouchableOpacity style={s.resumeRow}>
             <View style={[s.iconBox, { backgroundColor: '#ede9fe' }]}>
-              <Text style={{ color: T.purple, fontSize: 18 }}>🎤</Text>
+              <Text style={{ fontFamily: 'Inter_700Bold', color: T.purple, fontSize: 17 }}>S</Text>
             </View>
             <View style={{ flex: 1 }}>
               <Text style={s.resumeTitle}>Leadership</Text>
@@ -83,7 +84,7 @@ function HomeScreen() {
           <View style={s.cardDivider} />
           <TouchableOpacity style={s.resumeRow}>
             <View style={[s.iconBox, { backgroundColor: '#fef3c7' }]}>
-              <Text style={{ color: T.amber, fontSize: 18 }}>📖</Text>
+              <Text style={{ fontFamily: 'Inter_700Bold', color: T.denim, fontSize: 17 }}>B</Text>
             </View>
             <View style={{ flex: 1 }}>
               <Text style={s.resumeTitle}>John · Chapter 14</Text>
@@ -107,6 +108,36 @@ function HomeScreen() {
             </View>
           ))}
         </View>
+
+        {/* Library Stats */}
+        <View style={s.statsRow}>
+          {[
+            { stat: '0', label: 'Sermons' },
+            { stat: '0', label: 'Chapters' },
+            { stat: '0', label: 'Quotes' },
+            { stat: '0', label: 'Days' },
+          ].map((item, i) => (
+            <View key={i} style={[s.statCell, i < 3 && { borderRightWidth: 1, borderRightColor: T.border }]}>
+              <Text style={s.statNumber}>{item.stat}</Text>
+              <Text style={s.statLabel}>{item.label}</Text>
+            </View>
+          ))}
+        </View>
+
+        {/* Recently Viewed */}
+        <Text style={s.sectionLabel}>RECENTLY VIEWED</Text>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 20 }} contentContainerStyle={{ paddingRight: 4 }}>
+          {[
+            { title: 'Leadership', ref: '65-1207 · ¶24' },
+            { title: 'Shalom', ref: '64-0112 · ¶6' },
+            { title: 'Seven Seals', ref: '63-0318 · ¶51' },
+          ].map((item, i) => (
+            <TouchableOpacity key={i} style={s.recentCard}>
+              <Text style={s.recentTitle}>{item.title}</Text>
+              <Text style={s.recentRef}>{item.ref}</Text>
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
 
         {/* Quick Access */}
         <Text style={s.sectionLabel}>QUICK ACCESS</Text>
@@ -306,7 +337,7 @@ export default function App() {
             screenOptions={({ route }) => ({
               headerShown: false,
               tabBarIcon: ({ color, size }) => <TabIcon name={route.name} color={color} size={size} />,
-              tabBarActiveTintColor: T.denim,
+              tabBarActiveTintColor: T.royal,
               tabBarInactiveTintColor: T.muted,
               tabBarStyle: {
                 backgroundColor: T.bg,
@@ -376,7 +407,7 @@ const s = StyleSheet.create({
   },
   verseRef: {
     fontFamily: 'Inter_700Bold', fontSize: 10, color: T.capri,
-    letterSpacing: 1.2, marginBottom: 8,
+    letterSpacing: 1.5, marginBottom: 8,
   },
   verseText: {
     fontFamily: 'Lora_400Regular_Italic', fontSize: 14.5,
@@ -411,7 +442,7 @@ const s = StyleSheet.create({
   cardDivider: { height: 1, backgroundColor: T.border },
   resumeRow: { flexDirection: 'row', alignItems: 'center', padding: 14, gap: 12 },
   iconBox: { width: 42, height: 42, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
-  resumeTitle: { fontFamily: 'Inter_600SemiBold', fontSize: 14, color: T.text, marginBottom: 2 },
+  resumeTitle: { fontFamily: 'Lora_700Bold', fontSize: 14, color: T.text, marginBottom: 2 },
   resumeMeta: { fontFamily: 'Inter_500Medium', fontSize: 11 },
   chevron: { fontFamily: 'Inter_400Regular', fontSize: 20, color: T.muted, marginLeft: 4 },
 
@@ -475,6 +506,65 @@ const s = StyleSheet.create({
     paddingHorizontal: 14, paddingVertical: 10, backgroundColor: T.bg,
   },
   bookChipText: { fontFamily: 'Inter_500Medium', fontSize: 13, color: T.text },
+
+  // Daily card third circle
+  dailyDecorCircle3: {
+    position: 'absolute', bottom: -40, right: 20,
+    width: 100, height: 100, borderRadius: 50,
+    backgroundColor: 'rgba(0,191,255,0.03)',
+  },
+
+  // Library stats row
+  statsRow: {
+    flexDirection: 'row',
+    backgroundColor: T.bg,
+    borderWidth: 1,
+    borderColor: T.border,
+    borderRadius: 14,
+    marginBottom: 20,
+    overflow: 'hidden',
+  },
+  statCell: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 14,
+  },
+  statNumber: {
+    fontFamily: 'Lora_700Bold',
+    fontSize: 20,
+    color: T.denim,
+    marginBottom: 2,
+  },
+  statLabel: {
+    fontFamily: 'Inter_400Regular',
+    fontSize: 10,
+    color: T.muted,
+  },
+
+  // Recently Viewed cards
+  recentCard: {
+    backgroundColor: T.bg2,
+    borderWidth: 1,
+    borderColor: T.border,
+    borderRadius: 10,
+    padding: 12,
+    marginRight: 10,
+    width: 150,
+    minHeight: 44,
+    justifyContent: 'center',
+  },
+  recentTitle: {
+    fontFamily: 'Inter_600SemiBold',
+    fontSize: 13,
+    color: T.text,
+    marginBottom: 4,
+  },
+  recentRef: {
+    fontFamily: 'Inter_400Regular',
+    fontSize: 11,
+    color: T.muted,
+  },
 
   // Settings/More
   settingsSection: {
