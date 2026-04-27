@@ -1029,6 +1029,7 @@ function BibleScreen() {
   const [totalCh,    setTotalCh]    = useState(0);
   const [loadingVerse, setLoadingVerse] = useState(false);
   const [activeVerse,  setActiveVerse]  = useState(-1);
+  const [summaryExpanded, setSummaryExpanded] = useState(false);
 
   // AI summary
   const [chSummary, setChSummary]       = useState<string | null>(null);
@@ -1134,34 +1135,38 @@ function BibleScreen() {
             <ActivityIndicator color={T.denim} size="large" />
           </View>
         ) : (
-          <ScrollView style={[{ flex: 1 }, testament === 'OT' && { backgroundColor: '#FAF8F3' }]}
-            contentContainerStyle={[{ padding: 18, paddingBottom: 100 }, testament === 'OT' && { backgroundColor: '#FAF8F3' }]}>
-            <Text style={[s.chapterHeader, testament === 'OT' && { color: '#6B5344' }]}>{selBook.name}</Text>
-            <Text style={[s.chapterNum, testament === 'OT' && { color: '#9B7E5F' }]}>Chapter {selChapter}</Text>
+          <ScrollView style={{ flex: 1, backgroundColor: T.bg }}
+            contentContainerStyle={{ padding: 18, paddingBottom: 100 }}>
+            <Text style={s.chapterHeader}>{selBook.name}</Text>
+            <Text style={s.chapterNum}>Chapter {selChapter}</Text>
 
-            {/* AI Summary card */}
+            {/* AI Summary card - collapsible */}
             {chSummary && (
-              <View style={[s.summaryCard, testament === 'OT' && { backgroundColor: '#EFE8E0', borderColor: '#D4C4B8' }]}>
-                <Text style={[s.summaryLabel, testament === 'OT' && { color: '#6B5344' }]}>
-                  {selChapter === 1 ? `Context · ${selBook.name}` : `Recap · ${selBook.name} 1–${selChapter - 1}`}
-                </Text>
-                <Text style={[s.summaryText, testament === 'OT' && { color: '#5C4E42' }]}>{chSummary}</Text>
-              </View>
+              <TouchableOpacity style={s.summaryCard} onPress={() => setSummaryExpanded(!summaryExpanded)}>
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <Text style={s.summaryLabel}>
+                    {selChapter === 1 ? `Context · ${selBook.name}` : `Recap · ${selBook.name} 1–${selChapter - 1}`}
+                  </Text>
+                  <Text style={{ fontSize: 16, color: T.denim }}>{summaryExpanded ? '▼' : '▶'}</Text>
+                </View>
+                {summaryExpanded && (
+                  <Text style={[s.summaryText, { marginTop: 10 }]}>{chSummary}</Text>
+                )}
+              </TouchableOpacity>
             )}
 
             {verses.map((v, i) => (
               <TouchableOpacity key={i} activeOpacity={0.85}
                 onPress={() => setActiveVerse(activeVerse === i ? -1 : i)}
-                style={[s.verseRow, activeVerse === i && [s.verseRowActive, testament === 'OT' && { backgroundColor: '#EFDCC8' }]]}>
-                <Text style={[s.verseNumber, testament === 'OT' && { color: '#9B7E5F' }]}>{v.verse}</Text>
+                style={[s.verseRow, activeVerse === i && s.verseRowActive]}>
+                <Text style={s.verseNumber}>{v.verse}</Text>
                 <Text style={[
                   s.verseBody,
                   activeVerse === i && s.verseBodyActive,
                   isDivine(v.speaker) && s.verseBodyDivine,
-                  testament === 'OT' && { color: '#3E3530' },
                 ]}>{v.text}</Text>
                 {(v.references_count ?? 0) > 0 && (
-                  <View style={[s.refBadge, testament === 'OT' && { backgroundColor: '#D4C4B8', borderColor: '#C4B4A8' }]}><Text style={[s.refBadgeText, testament === 'OT' && { color: '#6B5344' }]}>{v.references_count}</Text></View>
+                  <View style={s.refBadge}><Text style={s.refBadgeText}>{v.references_count}</Text></View>
                 )}
               </TouchableOpacity>
             ))}
@@ -1371,11 +1376,6 @@ function ChatScreen() {
 
         {/* Input bar */}
         <View style={s.chatFooter}>
-          {remaining !== null && (
-            <Text style={[s.remainText, remaining <= 1 ? { color: T.red } : remaining <= 5 ? { color: T.amber } : { color: T.green }]}>
-              {remaining > 0 ? `${remaining} chat${remaining === 1 ? '' : 's'} remaining today` : 'Daily limit reached'}
-            </Text>
-          )}
           <View style={s.inputRow}>
             <TextInput style={s.chatInput} value={input} onChangeText={setInput}
               placeholder="What are you going through today?" placeholderTextColor={T.muted}
@@ -1679,6 +1679,7 @@ export default function App() {
                 tabBarLabelStyle: { fontFamily: 'Inter_600SemiBold', fontSize: 11, marginTop: 2 },
               })}>
               <Tab.Screen name="Home"    component={HomeScreen} />
+              <Tab.Screen name="Search"  component={SearchScreen} />
               <Tab.Screen name="Sermons" component={SermonsScreen} />
               <Tab.Screen name="Bible"   component={BibleScreen} />
               <Tab.Screen name="Chat"    component={ChatScreen} />
