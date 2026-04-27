@@ -621,6 +621,11 @@ function SermonsScreen() {
   const soundRef = useRef<Audio.Sound | null>(null);
   const rafRef   = useRef<any>(null);
 
+  // Sermon summary state
+  const [sermonSummary, setSermonSummary] = useState<string | null>(null);
+  const [summaryExpanded, setSummaryExpanded] = useState(false);
+  const [loadingSummary, setLoadingSummary] = useState(false);
+
   useEffect(() => {
     api<any>('/sermons').then(d => {
       if (!d) { setLoading(false); return; }
@@ -639,6 +644,8 @@ function SermonsScreen() {
     paraYPositions.current = {};
     paraSegsRef.current = new Map();
     flatSegsRef.current = [];
+    setSermonSummary(null);
+    setSummaryExpanded(false);
     setView('reader');
     setLoadingReader(true);
     const data = await api<any>(`/sermons/${s.id}/full-text`);
@@ -663,6 +670,12 @@ function SermonsScreen() {
       flatSegsRef.current = flat;
     }
     setLoadingReader(false);
+
+    // Fetch sermon summary
+    setLoadingSummary(true);
+    const sumData = await api<any>(`/sermons/${s.id}/summary`);
+    setSermonSummary(sumData?.summary ?? null);
+    setLoadingSummary(false);
   };
 
   const goBack = () => {
@@ -671,6 +684,8 @@ function SermonsScreen() {
     if (rafRef.current) cancelAnimationFrame(rafRef.current);
     setIsPlaying(false);
     setAudioUrl(null);
+    setSermonSummary(null);
+    setSummaryExpanded(false);
     setView('list'); setSelSermon(null); setParas([]);
   };
 
@@ -903,6 +918,18 @@ function SermonsScreen() {
             })()}
             <ScrollView ref={readerRef} style={{ flex: 1, backgroundColor: T.bg }}
               contentContainerStyle={{ paddingHorizontal: 18, paddingTop: 12, paddingBottom: 100 }}>
+              {/* Sermon summary card - collapsible */}
+              {sermonSummary && (
+                <TouchableOpacity style={s.summaryCard} onPress={() => setSummaryExpanded(!summaryExpanded)}>
+                  <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <Text style={s.summaryLabel}>SERMON SUMMARY</Text>
+                    <Text style={{ fontSize: 16, color: T.denim }}>{summaryExpanded ? '▼' : '▶'}</Text>
+                  </View>
+                  {summaryExpanded && (
+                    <Text style={[s.summaryText, { marginTop: 10 }]}>{sermonSummary}</Text>
+                  )}
+                </TouchableOpacity>
+              )}
               {paras.map((para, paraIdx) => {
                 const paraSegs = paraSegsRef.current.get(paraIdx);
                 const isParaActive = !!activeSegKey?.startsWith(`${paraIdx}-`);
