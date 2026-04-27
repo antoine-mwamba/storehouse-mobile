@@ -362,7 +362,7 @@ function HomeScreen({ navigation }: any) {
 
         {/* Customize Daily Notifications CTA */}
         <TouchableOpacity style={s.notificationsCTA} onPress={() => setProfile(true)}>
-          <Text style={s.notificationsCTAText}>⚙️ Customize Daily Notifications</Text>
+          <Text style={s.notificationsCTAText}>Customize Daily Notifications</Text>
         </TouchableOpacity>
 
         {/* Continue */}
@@ -373,7 +373,7 @@ function HomeScreen({ navigation }: any) {
               {lastReadSermon && (
                 <TouchableOpacity style={s.resumeRow} onPress={() => navigation.navigate('Sermons')}>
                   <View style={[s.iconBox, { backgroundColor: '#ede9fe' }]}>
-                    <Text style={{ fontSize: 17 }}>🎤</Text>
+                    <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 14, color: '#7c3aed' }}>S</Text>
                   </View>
                   <View style={{ flex: 1 }}>
                     <Text style={s.resumeTitle} numberOfLines={1}>{lastReadSermon.title}</Text>
@@ -386,7 +386,7 @@ function HomeScreen({ navigation }: any) {
               {lastReadBible && (
                 <TouchableOpacity style={s.resumeRow} onPress={() => navigation.navigate('Bible')}>
                   <View style={[s.iconBox, { backgroundColor: '#fef3c7' }]}>
-                    <Text style={{ fontSize: 17 }}>📖</Text>
+                    <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 14, color: '#d97706' }}>B</Text>
                   </View>
                   <View style={{ flex: 1 }}>
                     <Text style={s.resumeTitle}>{lastReadBible.book} · Ch {lastReadBible.chapter}</Text>
@@ -457,12 +457,14 @@ function HomeScreen({ navigation }: any) {
               ))}
             </View>
             {[
-              { label: 'Daily Themes & Nuggets', icon: '⭐' },
-              { label: 'Analytics',              icon: '📊' },
-              { label: 'Settings',               icon: '⚙️' },
+              { label: 'Daily Themes & Nuggets', icon: 'T', iconBg: '#fef3c7', iconColor: '#d97706' },
+              { label: 'Analytics',              icon: 'A', iconBg: '#eef4ff', iconColor: T.denim   },
+              { label: 'Settings',               icon: 'S', iconBg: T.bg2,     iconColor: T.muted   },
             ].map(item => (
               <TouchableOpacity key={item.label} style={s.settingsRow}>
-                <View style={s.settingsIcon}><Text>{item.icon}</Text></View>
+                <View style={[s.settingsIcon, { backgroundColor: item.iconBg, borderRadius: 8, width: 32, height: 32, alignItems: 'center', justifyContent: 'center' }]}>
+                  <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 13, color: item.iconColor }}>{item.icon}</Text>
+                </View>
                 <Text style={s.settingsLabel}>{item.label}</Text>
                 <Text style={[s.chevron, { color: T.muted }]}>›</Text>
               </TouchableOpacity>
