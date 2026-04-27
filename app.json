@@ -7,24 +7,75 @@
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
+    "scheme": "thestorehouse",
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
       "backgroundColor": "#002366"
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.thestorehouse.app",
+      "infoPlist": {
+        "NSMicrophoneUsageDescription": "The Storehouse does not use the microphone.",
+        "NSCameraUsageDescription": "The Storehouse does not use the camera.",
+        "ITSAppUsesNonExemptEncryption": false
+      },
+      "entitlements": {
+        "com.apple.developer.applesignin": [
+          "Default",
+          "Default"
+        ]
+      }
     },
     "android": {
+      "package": "com.thestorehouse.app",
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#ffffff"
+        "backgroundColor": "#002366"
       },
       "edgeToEdgeEnabled": true,
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "permissions": [
+        "android.permission.INTERNET",
+        "android.permission.ACCESS_NETWORK_STATE",
+        "android.permission.MODIFY_AUDIO_SETTINGS"
+      ]
     },
     "web": {
       "favicon": "./assets/favicon.png"
-    }
+    },
+    "plugins": [
+      "expo-secure-store",
+      "expo-web-browser",
+      [
+        "expo-av",
+        {
+          "microphonePermission": false
+        }
+      ],
+      "expo-apple-authentication",
+      [
+        "expo-updates",
+        {
+          "username": "antoine-mwamba"
+        }
+      ]
+    ],
+    "updates": {
+      "url": "https://u.expo.dev/592ed650-316d-46d3-9301-447c654581f2",
+      "enabled": true,
+      "checkAutomatically": "ON_LOAD",
+      "fallbackToCacheTimeout": 0
+    },
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "592ed650-316d-46d3-9301-447c654581f2"
+      }
+    },
+    "owner": "antoinemwamba7"
   }
 }
