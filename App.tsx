@@ -1070,6 +1070,12 @@ function BibleScreen() {
   const [ttsSpeaking,    setTtsSpeaking]    = useState(false);
   const [showVoicePicker, setShowVoicePicker] = useState(false);
 
+  // Cross-references
+  const [showCrossRefs,   setShowCrossRefs]   = useState(false);
+  const [crossRefVerse,   setCrossRefVerse]   = useState<number | null>(null);
+  const [crossRefs,       setCrossRefs]       = useState<{ to_book: string; to_chapter: number; to_verse: number; votes: number }[]>([]);
+  const [crossRefLoading, setCrossRefLoading] = useState(false);
+
   const books = testament === 'OT' ? OT_BOOKS : NT_BOOKS;
 
   // Load TTS voices
@@ -1131,6 +1137,17 @@ function BibleScreen() {
     setTotalCh(data?.total_chapters ?? selBook.c);
     setChSummary(sumData?.summary ?? null);
     setLoadingVerse(false);
+  };
+
+  const openCrossRefs = async (verseNum: number) => {
+    if (!selBook) return;
+    setCrossRefVerse(verseNum);
+    setCrossRefs([]);
+    setCrossRefLoading(true);
+    setShowCrossRefs(true);
+    const data = await api<any>(`/bible/${encodeURIComponent(selBook.name)}/${selChapter}/${verseNum}/crossrefs`);
+    setCrossRefs(data?.crossrefs ?? []);
+    setCrossRefLoading(false);
   };
 
   const prevChapter = () => { if (selChapter > 1) openChapter(selChapter - 1); };
@@ -1196,7 +1213,9 @@ function BibleScreen() {
                   isDivine(v.speaker) && s.verseBodyDivine,
                 ]}>{v.text}</Text>
                 {(v.references_count ?? 0) > 0 && (
-                  <View style={s.refBadge}><Text style={s.refBadgeText}>{v.references_count}</Text></View>
+                  <TouchableOpacity style={s.refBadge} onPress={() => openCrossRefs(v.verse)}>
+                    <Text style={s.refBadgeText}>{v.references_count}</Text>
+                  </TouchableOpacity>
                 )}
               </TouchableOpacity>
             ))}
@@ -1229,6 +1248,51 @@ function BibleScreen() {
                   </TouchableOpacity>
                 ))}
               </ScrollView>
+            </View>
+          </TouchableOpacity>
+        </Modal>
+
+        {/* Cross-references modal */}
+        <Modal visible={showCrossRefs} transparent animationType="slide"
+          onRequestClose={() => setShowCrossRefs(false)}>
+          <TouchableOpacity style={s.backdrop} activeOpacity={1}
+            onPress={() => setShowCrossRefs(false)}>
+            <View style={s.sheet} onStartShouldSetResponder={() => true}>
+              <View style={s.sheetHandle} />
+              <Text style={[s.sectionLabel, { marginBottom: 12 }]}>
+                CROSS-REFERENCES · {selBook?.name} {selChapter}:{crossRefVerse}
+              </Text>
+              {crossRefLoading ? (
+                <ActivityIndicator color={T.denim} style={{ marginVertical: 24 }} />
+              ) : crossRefs.length === 0 ? (
+                <Text style={[s.resumeMeta, { textAlign: 'center', marginVertical: 24 }]}>
+                  No cross-references found.
+                </Text>
+              ) : (
+                <ScrollView style={{ maxHeight: 340 }}>
+                  {crossRefs.map((cr, i) => (
+                    <TouchableOpacity key={i} style={s.settingsRow}
+                      onPress={() => {
+                        setShowCrossRefs(false);
+                        const target = OT_BOOKS.find(b => b.name === cr.to_book) ?? NT_BOOKS.find(b => b.name === cr.to_book);
+                        if (target) {
+                          setSelBook(target);
+                          setTestament(OT_BOOKS.some(b => b.name === cr.to_book) ? 'OT' : 'NT');
+                          openChapter(cr.to_chapter);
+                        }
+                      }}>
+                      <View style={[s.settingsIcon, { backgroundColor: T.bg2 }]}>
+                        <Text style={{ color: T.denim, fontSize: 13, fontWeight: '700' }}>✦</Text>
+                      </View>
+                      <View style={{ flex: 1 }}>
+                        <Text style={s.settingsLabel}>{cr.to_book} {cr.to_chapter}:{cr.to_verse}</Text>
+                        <Text style={s.resumeMeta}>{cr.votes} vote{cr.votes !== 1 ? 's' : ''}</Text>
+                      </View>
+                      <Text style={{ color: T.capri, fontSize: 16 }}>›</Text>
+                    </TouchableOpacity>
+                  ))}
+                </ScrollView>
+              )}
             </View>
           </TouchableOpacity>
         </Modal>
