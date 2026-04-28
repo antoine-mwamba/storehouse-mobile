@@ -300,6 +300,7 @@ function SecLabel({ t: text }: { t: string }) {
 
 // ── HOME ──────────────────────────────────────────────────────────────────────
 function HomeScreen({ navigation }: any) {
+  const { user } = useAuth();
   const hour = new Date().getHours();
   const greeting = hour < 12 ? 'Good Morning' : hour < 17 ? 'Good Afternoon' : 'Good Evening';
   const [daily, setDaily]     = useState<any>(null);
@@ -437,10 +438,10 @@ function HomeScreen({ navigation }: any) {
           <View style={s.sheet} onStartShouldSetResponder={() => true}>
             <View style={s.sheetHandle} />
             <View style={s.profileCard}>
-              <View style={s.avatar}><Text style={s.avatarText}>A</Text></View>
+              <View style={s.avatar}><Text style={s.avatarText}>{(user?.name?.[0] ?? 'G').toUpperCase()}</Text></View>
               <View style={{ flex: 1, marginLeft: 14 }}>
-                <Text style={s.resumeTitle}>Antoine Mwamba</Text>
-                <Text style={[s.resumeMeta, { color: T.muted }]}>antoinemwamba7@gmail.com</Text>
+                <Text style={s.resumeTitle}>{user?.name ?? 'Guest'}</Text>
+                <Text style={[s.resumeMeta, { color: T.muted }]}>{user?.email ?? ''}</Text>
               </View>
             </View>
             <View style={[s.statsRow, { marginHorizontal: 0 }]}>
