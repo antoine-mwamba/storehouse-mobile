@@ -587,7 +587,9 @@ function SearchScreen() {
 }
 
 // ── SERMONS ───────────────────────────────────────────────────────────────────
-type SermonFilter = 'All' | 'By Year' | 'By Location' | 'Recent' | 'Long' | 'Short';
+type SermonFilter = 'All' | 'By Year' | 'By Location' | 'Recent' | 'Long' | 'Short' | 'Saved';
+
+const SERMON_BOOKMARK_KEY = 'storehouse_sermon_bookmarks';
 
 function SermonsScreen() {
   const [view,   setView]   = useState<'list' | 'reader'>('list');
@@ -597,6 +599,22 @@ function SermonsScreen() {
   const [byYear, setByYear] = useState<Record<string, Sermon[]>>({});
   const [years,  setYears]  = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
+  const [bookmarks, setBookmarks] = useState<Set<number>>(new Set());
+
+  useEffect(() => {
+    SecureStore.getItemAsync(SERMON_BOOKMARK_KEY)
+      .then(v => { if (v) setBookmarks(new Set(JSON.parse(v))); })
+      .catch(() => {});
+  }, []);
+
+  const toggleBookmark = (id: number) => {
+    setBookmarks(prev => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      SecureStore.setItemAsync(SERMON_BOOKMARK_KEY, JSON.stringify([...next])).catch(() => {});
+      return next;
+    });
+  };
 
   // Reader state
   const [selSermon, setSelSermon] = useState<Sermon | null>(null);
@@ -833,6 +851,7 @@ function SermonsScreen() {
     if (filter === 'Recent') return list.slice(0, 50);
     if (filter === 'Long')   return list.filter(s => (s.duration_minutes ?? 0) > 60);
     if (filter === 'Short')  return list.filter(s => (s.duration_minutes ?? 0) > 0 && (s.duration_minutes ?? 0) < 30);
+    if (filter === 'Saved')  return list.filter(s => bookmarks.has(s.id));
     return list;
   })();
 
@@ -986,7 +1005,7 @@ function SermonsScreen() {
         <ScrollView horizontal showsHorizontalScrollIndicator={false}
           style={{ flexGrow: 0, borderBottomWidth: 1, borderBottomColor: T.border }}
           contentContainerStyle={{ paddingHorizontal: 12, paddingVertical: 0 }}>
-          {(['All', 'By Year', 'By Location', 'Recent', 'Long', 'Short'] as SermonFilter[]).map(f => (
+          {(['All', 'By Year', 'By Location', 'Recent', 'Long', 'Short', 'Saved'] as SermonFilter[]).map(f => (
             <TouchableOpacity key={f} style={[s.filterTab, filter === f && s.filterTabActive]}
               onPress={() => setFilter(f)}>
               <Text style={[s.filterTabText, filter === f && s.filterTabTextActive]}>{f}</Text>
@@ -996,12 +1015,15 @@ function SermonsScreen() {
 
         {loading ? (
           <ActivityIndicator style={{ margin: 24 }} color={T.denim} />
-        ) : filter === 'All' || filter === 'Recent' || filter === 'Long' || filter === 'Short' ? (
+        ) : filter === 'All' || filter === 'Recent' || filter === 'Long' || filter === 'Short' || filter === 'Saved' ? (
           <>
-            <Text style={s.resultCount}>{visible.length} sermon{visible.length !== 1 ? 's' : ''}</Text>
+            {filter === 'Saved' && visible.length === 0
+              ? <Text style={[s.resultCount, { textAlign: 'center', marginTop: 40 }]}>No bookmarked sermons yet.{'\n'}Tap 🔖 on any sermon to save it.</Text>
+              : <Text style={s.resultCount}>{visible.length} sermon{visible.length !== 1 ? 's' : ''}</Text>
+            }
             <FlatList data={visible} keyExtractor={s2 => String(s2.id)}
               contentContainerStyle={{ paddingBottom: 100 }}
-              renderItem={({ item }) => <SermonRow sermon={item} onPress={() => openSermon(item)} />}
+              renderItem={({ item }) => <SermonRow sermon={item} onPress={() => openSermon(item)} bookmarked={bookmarks.has(item.id)} onBookmark={() => toggleBookmark(item.id)} />}
             />
           </>
         ) : filter === 'By Year' ? (
@@ -1009,7 +1031,7 @@ function SermonsScreen() {
             {groupedByYear.map(({ yr, items }) => (
               <View key={yr}>
                 <Text style={s.groupLabel}>{yr}</Text>
-                {items.map(item => <SermonRow key={item.id} sermon={item} onPress={() => openSermon(item)} />)}
+                {items.map(item => <SermonRow key={item.id} sermon={item} onPress={() => openSermon(item)} bookmarked={bookmarks.has(item.id)} onBookmark={() => toggleBookmark(item.id)} />)}
               </View>
             ))}
           </ScrollView>
@@ -1018,7 +1040,7 @@ function SermonsScreen() {
             {groupedByLoc.map(([loc, items]) => (
               <View key={loc}>
                 <Text style={s.groupLabel}>{loc} ({items.length})</Text>
-                {items.map(item => <SermonRow key={item.id} sermon={item} onPress={() => openSermon(item)} />)}
+                {items.map(item => <SermonRow key={item.id} sermon={item} onPress={() => openSermon(item)} bookmarked={bookmarks.has(item.id)} onBookmark={() => toggleBookmark(item.id)} />)}
               </View>
             ))}
           </ScrollView>
@@ -1028,7 +1050,7 @@ function SermonsScreen() {
   );
 }
 
-function SermonRow({ sermon, onPress }: { sermon: Sermon; onPress: () => void }) {
+function SermonRow({ sermon, onPress, bookmarked, onBookmark }: { sermon: Sermon; onPress: () => void; bookmarked?: boolean; onBookmark?: () => void }) {
   const inProgress = lastReadSermon?.id === sermon.id;
   return (
     <TouchableOpacity style={[s.sermonRow, inProgress && s.sermonRowActive]} onPress={onPress}>
@@ -1040,6 +1062,11 @@ function SermonRow({ sermon, onPress }: { sermon: Sermon; onPress: () => void })
         <Text style={s.sermonMeta}>{sermon.date_code} · {sermon.location || '—'}</Text>
         {inProgress && <Text style={s.resumeLabel}>▶ Resume at ¶{lastReadSermon!.paraIndex + 1}</Text>}
       </View>
+      {onBookmark && (
+        <TouchableOpacity onPress={onBookmark} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }} style={{ padding: 4, marginRight: 4 }}>
+          <Text style={{ fontSize: 17, color: bookmarked ? T.capri : T.muted }}>{bookmarked ? '🔖' : '🏷'}</Text>
+        </TouchableOpacity>
+      )}
       <View style={s.yearBadge}><Text style={s.yearBadgeText}>{sermon.year}</Text></View>
     </TouchableOpacity>
   );
