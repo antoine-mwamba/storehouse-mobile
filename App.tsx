@@ -449,8 +449,8 @@ function HomeScreen({ navigation }: any) {
               {[
                 { stat: stats ? `${Math.round(stats.quotes / 1000)}K+` : '…', label: 'Quotes' },
                 { stat: stats ? String(stats.sermons) : '…', label: 'Sermons' },
-                { stat: '31K+', label: 'Verses' },
-                { stat: '0', label: 'Streak' },
+                { stat: stats ? `${Math.round(stats.verses / 1000)}K+` : '…', label: 'Verses' },
+                { stat: stats ? String(stats.streak ?? 0) : '…', label: 'Streak' },
               ].map((item, i) => (
                 <View key={i} style={[s.statCell, i < 3 && { borderRightWidth: 1, borderRightColor: T.border }]}>
                   <Text style={s.statNumber}>{item.stat}</Text>
