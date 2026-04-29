@@ -2,7 +2,7 @@ import { useState, useRef, useEffect, useCallback, createContext, useContext } f
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
   TextInput, SafeAreaView, ActivityIndicator, KeyboardAvoidingView,
-  Platform, Modal, FlatList, Linking,
+  Platform, Modal, FlatList, Linking, Alert,
 } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
@@ -1666,14 +1666,15 @@ function AccountScreen() {
               { icon: '🔖', label: 'Saved Highlights', sub: 'Your personal notes' },
               { icon: '🔔', label: 'Notifications', sub: 'Manage daily reminders' },
             ].map(row => (
-              <View key={row.label} style={[s.settingsRow, { marginBottom: 0 }]}>
+              <TouchableOpacity key={row.label} style={[s.settingsRow, { marginBottom: 0 }]}
+                onPress={() => Alert.alert(row.label, 'Coming soon — this feature is in development.')}>
                 <View style={s.settingsIcon}><Text style={{ fontSize: 16 }}>{row.icon}</Text></View>
                 <View style={{ flex: 1 }}>
                   <Text style={s.settingsLabel}>{row.label}</Text>
                   <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 12, color: T.muted }}>{row.sub}</Text>
                 </View>
                 <Text style={s.chevron}>›</Text>
-              </View>
+              </TouchableOpacity>
             ))}
 
             <TouchableOpacity
