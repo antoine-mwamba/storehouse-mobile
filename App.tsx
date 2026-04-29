@@ -1144,25 +1144,27 @@ function BibleScreen() {
     lastReadBible = { book: book.name, chapter: 1 };
   };
 
-  const openChapter = async (ch: number) => {
-    if (!selBook) return;
+  const openChapter = async (ch: number, book?: { name: string; c: number }) => {
+    const activeBook = book ?? selBook;
+    if (!activeBook) return;
+    if (book) setSelBook(book);
     setSelChapter(ch);
     setView('reader');
     setActiveVerse(-1);
     setChSummary(null);
     ttsStop();
     setLoadingVerse(true);
-    lastReadBible = { book: selBook.name, chapter: ch };
+    lastReadBible = { book: activeBook.name, chapter: ch };
     const [data, sumData] = await Promise.all([
-      api<any>(`/bible/${encodeURIComponent(selBook.name)}/${ch}`),
+      api<any>(`/bible/${encodeURIComponent(activeBook.name)}/${ch}`),
       api<any>('/bible/summary', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ book: selBook.name, chapter: ch }),
+        body: JSON.stringify({ book: activeBook.name, chapter: ch }),
       }),
     ]);
     setVerses(data?.verses ?? []);
-    setTotalCh(data?.total_chapters ?? selBook.c);
+    setTotalCh(data?.total_chapters ?? activeBook.c);
     setChSummary(sumData?.summary ?? null);
     setLoadingVerse(false);
   };
@@ -1304,9 +1306,8 @@ function BibleScreen() {
                         setShowCrossRefs(false);
                         const target = OT_BOOKS.find(b => b.name === cr.to_book) ?? NT_BOOKS.find(b => b.name === cr.to_book);
                         if (target) {
-                          setSelBook(target);
                           setTestament(OT_BOOKS.some(b => b.name === cr.to_book) ? 'OT' : 'NT');
-                          openChapter(cr.to_chapter);
+                          openChapter(cr.to_chapter, target);
                         }
                       }}>
                       <View style={[s.settingsIcon, { backgroundColor: T.bg2 }]}>
