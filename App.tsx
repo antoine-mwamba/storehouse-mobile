@@ -276,6 +276,7 @@ function buildParagraphSegments(
 // ── Session state (persists across tab switches) ───────────────────────────────
 let lastReadSermon: { id: number; title: string; paraIndex: number } | null = null;
 let lastReadBible:  { book: string; chapter: number } | null = null;
+let chatToday = false;
 
 // ── Shared UI ─────────────────────────────────────────────────────────────────
 function RoyalHeader({ title, sub, onBack }: { title: string; sub?: string; onBack?: () => void }) {
@@ -407,7 +408,7 @@ function HomeScreen({ navigation }: any) {
             { label: 'Read a Sermon',  done: !!lastReadSermon },
             { label: 'Daily Quote',    done: !!daily },
             { label: 'Bible Chapter',  done: !!lastReadBible },
-            { label: 'Chat Session',   done: false },
+            { label: 'Chat Session',   done: chatToday },
           ].map((g, i) => (
             <View key={i} style={[s.goalChip, g.done && s.goalChipDone]}>
               <Text style={[s.goalText, g.done && s.goalTextDone]}>{g.done ? '✓ ' : ''}{g.label}</Text>
@@ -1438,6 +1439,7 @@ function ChatScreen() {
         replyText = body.reply;
         sources = body.quotes_used ?? null;
         remainingCount = body.remaining;
+        chatToday = true;
       } else if (body?.detail) {
         replyText = typeof body.detail === 'string' ? body.detail : `Server error (${r.status}).`;
       } else if (!r.ok) {
