@@ -1377,6 +1377,7 @@ function ChatScreen() {
   const [loading,   setLoading]   = useState(false);
   const [remaining, setRemaining] = useState<number | null>(null);
   const bottomRef = useRef<ScrollView>(null);
+  const { token } = useAuth();
 
   const STARTERS = [
     "What does Brother Branham say about faith?",
@@ -1392,18 +1393,36 @@ function ChatScreen() {
     const history = messages.slice(1).map(m => ({ role: m.role, content: m.text }));
     setMessages(prev => [...prev, { role: 'user', text: msg }]);
     setLoading(true);
-    const data = await api<any>('/chat', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ message: msg, history }),
-    });
+
+    let replyText = 'Could not reach the server. Check your connection.';
+    let sources: any = null;
+    let remainingCount: number | undefined;
+
+    try {
+      const headers: any = { 'Content-Type': 'application/json' };
+      if (token) headers['Authorization'] = `Bearer ${token}`;
+      const r = await fetch(`${BASE}/chat`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({ message: msg, history }),
+      });
+      const body = await r.json().catch(() => null);
+      if (r.ok && body?.reply) {
+        replyText = body.reply;
+        sources = body.quotes_used ?? null;
+        remainingCount = body.remaining;
+      } else if (body?.detail) {
+        replyText = typeof body.detail === 'string' ? body.detail : `Server error (${r.status}).`;
+      } else if (!r.ok) {
+        replyText = `Server error (${r.status}). Please try again.`;
+      }
+    } catch {
+      replyText = 'Could not reach the server. Check your connection.';
+    }
+
     setLoading(false);
-    if (data?.remaining !== undefined) setRemaining(data.remaining);
-    setMessages(prev => [...prev, {
-      role: 'assistant',
-      text: data?.reply ?? 'Could not reach the server.',
-      sources: data?.quotes_used ?? null,
-    }]);
+    if (remainingCount !== undefined) setRemaining(remainingCount);
+    setMessages(prev => [...prev, { role: 'assistant', text: replyText, sources }]);
   };
 
   useEffect(() => {
