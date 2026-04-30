@@ -301,7 +301,7 @@ function SecLabel({ t: text }: { t: string }) {
 
 // ── HOME ──────────────────────────────────────────────────────────────────────
 function HomeScreen({ navigation }: any) {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const hour = new Date().getHours();
   const greeting = hour < 12 ? 'Good Morning' : hour < 17 ? 'Good Afternoon' : 'Good Evening';
   const [daily, setDaily]     = useState<any>(null);
@@ -471,7 +471,7 @@ function HomeScreen({ navigation }: any) {
                 <Text style={[s.chevron, { color: T.muted }]}>›</Text>
               </TouchableOpacity>
             ))}
-            <TouchableOpacity style={[s.settingsRow, { borderBottomWidth: 0, marginTop: 4 }]}>
+            <TouchableOpacity style={[s.settingsRow, { borderBottomWidth: 0, marginTop: 4 }]} onPress={() => { logout(); setProfile(false); }}>
               <Text style={[s.settingsLabel, { color: T.red }]}>Sign Out</Text>
             </TouchableOpacity>
           </View>
