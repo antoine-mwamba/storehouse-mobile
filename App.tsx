@@ -593,6 +593,7 @@ type SermonFilter = 'All' | 'By Year' | 'By Location' | 'Recent' | 'Long' | 'Sho
 const SERMON_BOOKMARK_KEY = 'storehouse_sermon_bookmarks';
 
 function SermonsScreen() {
+  const { token } = useAuth();
   const [view,   setView]   = useState<'list' | 'reader'>('list');
   const [all,    setAll]    = useState<Sermon[]>([]);
   const [filter, setFilter] = useState<SermonFilter>('All');
@@ -601,6 +602,8 @@ function SermonsScreen() {
   const [years,  setYears]  = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [bookmarks, setBookmarks] = useState<Set<number>>(new Set());
+  const [paraNotesMap, setParaNotesMap] = useState<Record<number, string>>({});
+  const [noteModal, setNoteModal] = useState<{ paraIdx: number; text: string } | null>(null);
 
   useEffect(() => {
     SecureStore.getItemAsync(SERMON_BOOKMARK_KEY)
@@ -693,6 +696,16 @@ function SermonsScreen() {
     }
     setLoadingReader(false);
 
+    if (token) {
+      apiWithToken<{ notes: { paragraph_index: number; note_text: string | null }[] }>(
+        `/notes?sermon_id=${s.id}`, token
+      ).then(r => {
+        const map: Record<number, string> = {};
+        r?.notes?.forEach(n => { if (n.note_text) map[n.paragraph_index] = n.note_text; });
+        setParaNotesMap(map);
+      }).catch(() => {});
+    }
+
     // Fetch sermon summary
     setLoadingSummary(true);
     const sumData = await api<any>(`/sermons/${s.id}/summary`);
@@ -709,6 +722,20 @@ function SermonsScreen() {
     setSermonSummary(null);
     setSummaryExpanded(false);
     setView('list'); setSelSermon(null); setParas([]);
+    setParaNotesMap({});
+  };
+
+  const saveParaNote = async () => {
+    if (!noteModal || !selSermon || !token) return;
+    const { paraIdx, text } = noteModal;
+    if (text.trim()) {
+      await apiWithToken('/notes', token, {
+        method: 'POST',
+        body: JSON.stringify({ sermon_id: selSermon.id, paragraph_index: paraIdx, note_text: text.trim() }),
+      });
+      setParaNotesMap(prev => ({ ...prev, [paraIdx]: text.trim() }));
+    }
+    setNoteModal(null);
   };
 
   // Load audio URL when sermon opens
@@ -982,11 +1009,45 @@ function SermonsScreen() {
                         : <Text style={s.sentenceSpan}>{para.text}</Text>
                       }
                     </Text>
+                    {token ? (
+                      <TouchableOpacity
+                        style={s.noteBtn}
+                        onPress={() => setNoteModal({ paraIdx, text: paraNotesMap[paraIdx] ?? '' })}
+                      >
+                        <Text style={s.noteBtnText}>{paraNotesMap[paraIdx] ? '📝' : '✎'}</Text>
+                      </TouchableOpacity>
+                    ) : null}
+                    {paraNotesMap[paraIdx] ? <Text style={s.notePreview}>{paraNotesMap[paraIdx]}</Text> : null}
                   </View>
                 );
               })}
             </ScrollView>
           </>
+        )}
+        {noteModal !== null && (
+          <Modal visible transparent animationType="slide" onRequestClose={() => setNoteModal(null)}>
+            <View style={s.noteOverlay}>
+              <View style={s.noteCard}>
+                <Text style={s.noteTitleText}>Paragraph Note</Text>
+                <TextInput
+                  style={s.noteInput}
+                  multiline
+                  value={noteModal.text}
+                  onChangeText={t => setNoteModal(m => m ? { ...m, text: t } : m)}
+                  placeholder="Add a note for this paragraph…"
+                  placeholderTextColor="#aaa"
+                />
+                <View style={s.noteActions}>
+                  <TouchableOpacity style={s.noteSave} onPress={saveParaNote}>
+                    <Text style={s.noteSaveText}>Save</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity style={s.noteCancel} onPress={() => setNoteModal(null)}>
+                    <Text style={s.noteCancelText}>Cancel</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            </View>
+          </Modal>
         )}
       </SafeAreaView>
     );
@@ -2074,4 +2135,17 @@ const s = StyleSheet.create({
   },
   summaryLabel: { fontFamily: 'Inter_700Bold', fontSize: 10, color: T.capri, letterSpacing: 1, marginBottom: 6 },
   summaryText: { fontFamily: 'Lora_400Regular_Italic', fontSize: 13.5, color: T.muted, lineHeight: 20 },
+
+  noteBtn: { paddingLeft: 4, paddingTop: 4, alignSelf: 'flex-start' },
+  noteBtnText: { fontSize: 13, color: '#888' },
+  notePreview: { fontSize: 12, color: '#888', fontStyle: 'italic', marginTop: 2, marginHorizontal: 4 },
+  noteOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.55)', justifyContent: 'flex-end' },
+  noteCard: { backgroundColor: '#fff', padding: 24, borderTopLeftRadius: 16, borderTopRightRadius: 16, paddingBottom: 40 },
+  noteTitleText: { fontFamily: 'Inter_600SemiBold', fontSize: 16, marginBottom: 12, color: '#1a1a2e' },
+  noteInput: { borderWidth: 1, borderColor: '#ddd', borderRadius: 8, padding: 12, minHeight: 80, fontSize: 14, marginBottom: 16, fontFamily: 'Lora_400Regular' },
+  noteActions: { flexDirection: 'row', gap: 10 },
+  noteSave: { flex: 1, backgroundColor: '#1a1a2e', padding: 14, borderRadius: 8, alignItems: 'center' },
+  noteSaveText: { color: '#fff', fontFamily: 'Inter_600SemiBold' },
+  noteCancel: { flex: 1, padding: 14, borderRadius: 8, alignItems: 'center', borderWidth: 1, borderColor: '#ccc' },
+  noteCancelText: { color: '#555' },
 });
