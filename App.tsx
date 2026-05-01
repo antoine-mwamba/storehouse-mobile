@@ -24,7 +24,7 @@ WebBrowser.maybeCompleteAuthSession();
 SplashScreen.preventAutoHideAsync();
 
 // ── API ──────────────────────────────────────────────────────────────────────
-const BASE = 'http://localhost:8000';
+const BASE = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:8000';
 
 async function apiWithToken<T>(path: string, token: string | null, opts?: RequestInit): Promise<T | null> {
   try {
