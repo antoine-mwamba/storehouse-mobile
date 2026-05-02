@@ -331,7 +331,7 @@ function HomeScreen({ navigation }: any) {
           </Text>
         </View>
         <TouchableOpacity style={s.avatar} onPress={() => setProfile(true)}>
-          <Text style={s.avatarText}>A</Text>
+          <Text style={s.avatarText}>{(user?.name?.[0] ?? 'A').toUpperCase()}</Text>
         </TouchableOpacity>
       </View>
 
