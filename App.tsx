@@ -14,6 +14,7 @@ import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { Audio, AVPlaybackStatus } from 'expo-av';
 import * as SecureStore from 'expo-secure-store';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as WebBrowser from 'expo-web-browser';
 import * as AuthSession from 'expo-auth-session';
 import * as Google from 'expo-auth-session/providers/google';
@@ -46,6 +47,7 @@ async function api<T>(path: string, opts?: RequestInit): Promise<T | null> {
 
 // ── Auth Context ──────────────────────────────────────────────────────────────
 const TOKEN_KEY = 'storehouse_jwt';
+const CHAT_SESSION_KEY = 'storehouse_chat_session';
 
 type AuthUser = { id: number; name: string; email: string; avatar_url?: string; is_paid?: boolean };
 type AuthCtxType = {
@@ -1476,6 +1478,20 @@ function ChatScreen() {
     "How should I pray?",
   ];
 
+  useEffect(() => {
+    AsyncStorage.getItem(CHAT_SESSION_KEY).then(stored => {
+      if (!stored) return;
+      try {
+        const parsed = JSON.parse(stored);
+        if (Array.isArray(parsed) && parsed.length > 1) setMessages(parsed);
+      } catch {}
+    });
+  }, []);
+
+  useEffect(() => {
+    if (messages.length > 1) AsyncStorage.setItem(CHAT_SESSION_KEY, JSON.stringify(messages));
+  }, [messages]);
+
   const send = async (text?: string) => {
     const msg = (text ?? input).trim();
     if (!msg || loading) return;
@@ -1527,7 +1543,7 @@ function ChatScreen() {
       <View style={[s.header, { justifyContent: 'space-between' }]}>
         <Text style={s.headerTitle}>Ask the Sermons</Text>
         {messages.length > 1 && (
-          <TouchableOpacity onPress={() => { setMessages([GREETING]); setRemaining(null); }}>
+          <TouchableOpacity onPress={() => { setMessages([GREETING]); setRemaining(null); AsyncStorage.removeItem(CHAT_SESSION_KEY); }}>
             <Text style={{ fontFamily: 'Inter_500Medium', fontSize: 12, color: 'rgba(255,255,255,0.6)' }}>New Chat</Text>
           </TouchableOpacity>
         )}
